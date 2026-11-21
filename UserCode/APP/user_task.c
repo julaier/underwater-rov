@@ -29,23 +29,23 @@ GamepadData_t *pad;
 void System_Task(void)
 {
     /***********游戏手柄控制无刷电机************/
-    pad = Gamepad_GetData();
-    if (pad->isUpdated)
+    pad = Gamepad_GetData();// 先得到游戏手柄的初始化数据
+    if (pad->isUpdated)// 刚开始没有更新为0
 		{
 			pad->isUpdated = 0;  // 清除标志
 
       // 将按键状态发送到BuoyancyTask中
-      xQueueSend(WaterTankQueueHandle, &pad->buttons, 0);
+      xQueueSend(WaterTankQueueHandle, &pad->buttons, 0);// 发送到消息队列中，0表示队列满了返回失败
     }
 
     /**************** ADC采样值 ****************/
     // char  water_adc_info[128];
     // sprintf(water_adc_info, "Voltage: %.2fV, %.2fV\n", voltage_value[0], voltage_value[1]);
     // Debug_USART_Show(water_adc_info);
-    if(Water_Check()) 
+    if(Water_Check()) // 通过水位传感器，adc采样，返回值为1代表进水
     {
       //Debug_USART_Show("Water detected! Start draining...\r\n"); //调试信息
-      Water_Tank_Draining_To_Empty(&tank_front);
+      Water_Tank_Draining_To_Empty(&tank_front);// 排水上升
       //Debug_USART_Show("Draing finished...\r\n"); //调试信息
       while(1);
     }
@@ -85,7 +85,7 @@ void Navigation_Task(void)
  */
 void Buoyancy_Task(void)
 {
-  uint8_t buttons = 0;
+  uint16_t buttons = 0;
   //A键：前舱吸水1ml B键：前舱排水1ml X键：后舱吸水1ml Y键：后舱排1ml
   xQueueReceive(WaterTankQueueHandle, &buttons, portMAX_DELAY);
   if(buttons == 1)

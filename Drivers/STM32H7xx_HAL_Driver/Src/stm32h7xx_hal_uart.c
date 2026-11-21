@@ -2219,7 +2219,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
     {
       if (huart->RxISR != NULL)
       {
-        huart->RxISR(huart);
+        huart->RxISR(huart);// 从这里跳到4225行，然后等RxXferCount减到0就跳到4297
       }
       return;
     }

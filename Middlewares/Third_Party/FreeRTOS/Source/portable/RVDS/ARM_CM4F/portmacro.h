@@ -85,6 +85,7 @@
 /*-----------------------------------------------------------*/
 
 /* Scheduler utilities. */
+// 此函数用于触发PendSV中断，以便在中断服务程序中进行上下文切换。PendSV是一个特殊的中断，用于在FreeRTOS中实现任务切换。通过设置PendSV中断标志，系统会在当前中断处理完成后，自动调用PendSV处理程序，从而实现任务的切换。
     #define portYIELD()                                 \
     {                                                   \
         /* Set a PendSV to request a context switch. */ \
@@ -181,7 +182,7 @@
         }
     }
 /*-----------------------------------------------------------*/
-
+// 用于提升BASEPRI值，进入临界区，就是禁止中断，防止中断嵌套。BASEPRI寄存器用于设置中断优先级屏蔽阈值，只有优先级高于该阈值的中断才能被响应。通过设置BASEPRI为configMAX_SYSCALL_INTERRUPT_PRIORITY，可以屏蔽所有优先级低于该值的中断，从而实现临界区保护。
     static portFORCE_INLINE void vPortRaiseBASEPRI( void )
     {
         uint32_t ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;

@@ -1970,15 +1970,31 @@ void vTaskStartScheduler( void )
     BaseType_t xReturn;
 
     /* Add the idle task at the lowest priority. */
+    // 添加空闲任务，优先级最低
+    /*configSUPPORT_STATIC_ALLOCATION这是一个宏定义，
+    *用于配置FreeRTOS是否支持静态内存分配。
+    *如果configSUPPORT_STATIC_ALLOCATION被设置为1，
+    *则表示支持静态内存分配，允许用户在编译时为任务分配固定的内存空间，
+    *而不是在运行时动态分配内存。这对于嵌入式系统来说非常重要，因为它可以减少内存碎片化和提高系统的确定性。
+    */
     #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     {
-        StaticTask_t * pxIdleTaskTCBBuffer = NULL;
-        StackType_t * pxIdleTaskStackBuffer = NULL;
-        uint32_t ulIdleTaskStackSize;
+        StaticTask_t * pxIdleTaskTCBBuffer = NULL;// 空闲任务的TCB缓冲区
+        StackType_t * pxIdleTaskStackBuffer = NULL;// 空闲任务的栈缓冲区
+        uint32_t ulIdleTaskStackSize;// 空闲任务的栈大小
 
         /* The Idle task is created using user provided RAM - obtain the
          * address of the RAM then create the idle task. */
-        vApplicationGetIdleTaskMemory( &pxIdleTaskTCBBuffer, &pxIdleTaskStackBuffer, &ulIdleTaskStackSize );
+        vApplicationGetIdleTaskMemory( &pxIdleTaskTCBBuffer, &pxIdleTaskStackBuffer, &ulIdleTaskStackSize );// 设置空闲任务的TCB缓冲区、栈缓冲区和栈大小
+        /*prvIdleTask为空闲任务的函数指针，
+        * configIDLE_TASK_NAME为空闲任务的名称，
+        * ulIdleTaskStackSize为空闲任务的栈大小，
+        * ( void * ) NULL为空闲任务的参数，
+        * portPRIVILEGE_BIT为空闲任务的权限位，
+        * *pxIdleTaskStackBuffer为空闲任务的栈缓冲区，
+        * *pxIdleTaskTCBBuffer为空闲任务的TCB缓冲区
+        * return 为空闲任务的句柄
+        */
         xIdleTaskHandle = xTaskCreateStatic( prvIdleTask,
                                              configIDLE_TASK_NAME,
                                              ulIdleTaskStackSize,
@@ -1987,7 +2003,7 @@ void vTaskStartScheduler( void )
                                              pxIdleTaskStackBuffer,
                                              pxIdleTaskTCBBuffer ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
 
-        if( xIdleTaskHandle != NULL )
+        if( xIdleTaskHandle != NULL )// 如果空闲任务创建成功，设置xReturn为pdPASS
         {
             xReturn = pdPASS;
         }
@@ -2008,7 +2024,7 @@ void vTaskStartScheduler( void )
     }
     #endif /* configSUPPORT_STATIC_ALLOCATION */
 
-    #if ( configUSE_TIMERS == 1 )
+    #if ( configUSE_TIMERS == 1 )// 置1使用软件定时器
     {
         if( xReturn == pdPASS )
         {
@@ -2016,7 +2032,7 @@ void vTaskStartScheduler( void )
         }
         else
         {
-            mtCOVERAGE_TEST_MARKER();
+            mtCOVERAGE_TEST_MARKER();// 标记else分支供覆盖率测试，普通构建中为空
         }
     }
     #endif /* configUSE_TIMERS */
@@ -2047,9 +2063,9 @@ void vTaskStartScheduler( void )
         }
         #endif
 
-        xNextTaskUnblockTime = portMAX_DELAY;
-        xSchedulerRunning = pdTRUE;
-        xTickCount = ( TickType_t ) configINITIAL_TICK_COUNT;
+        xNextTaskUnblockTime = portMAX_DELAY;// 将下一次因延时或超时解除阻塞的tick初始化为最大值
+        xSchedulerRunning = pdTRUE;// 将内核的调度状态标记为运行
+        xTickCount = ( TickType_t ) configINITIAL_TICK_COUNT;// 设置rtos节拍计数的初值
 
         /* If configGENERATE_RUN_TIME_STATS is defined then the following
          * macro must be defined to configure the timer/counter used to generate
@@ -2057,13 +2073,13 @@ void vTaskStartScheduler( void )
          * is set to 0 and the following line fails to build then ensure you do not
          * have portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() defined in your
          * FreeRTOSConfig.h file. */
-        portCONFIGURE_TIMER_FOR_RUN_TIME_STATS();
+        portCONFIGURE_TIMER_FOR_RUN_TIME_STATS();// 启用运行时间统计时，配置用于测量各任务cpu用时的计数器
 
-        traceTASK_SWITCHED_IN();
+        traceTASK_SWITCHED_IN();// 调用追踪钩子，记录首个任务的切入事件
 
         /* Setting up the timer tick is hardware specific and thus in the
          * portable interface. */
-        xPortStartScheduler();
+        xPortStartScheduler();// 配置rtos的节拍中断，启动第一个任务
 
         /* In most cases, xPortStartScheduler() will not return. If it
          * returns pdTRUE then there was not enough heap memory available
@@ -3497,13 +3513,13 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     /* In case a task that has a secure context deletes itself, in which case
      * the idle task is responsible for deleting the task's secure context, if
      * any. */
-    portALLOCATE_SECURE_CONTEXT( configMINIMAL_SECURE_STACK_SIZE );
-
-    for( ; ; )
+    portALLOCATE_SECURE_CONTEXT( configMINIMAL_SECURE_STACK_SIZE );//安全栈
+// 此任务是空闲任务，优先级最低，只有在没有其他任务可运行时才会运行。它的主要作用是释放被删除的任务的资源，释放被删除任务的TCB和堆栈，并在系统空闲时执行一些后台处理。它还可以调用用户定义的空闲钩子函数，以便在系统空闲时执行特定的操作。
+    for( ; ; )// 死循环
     {
         /* See if any tasks have deleted themselves - if so then the idle task
          * is responsible for freeing the deleted task's TCB and stack. */
-        prvCheckTasksWaitingTermination();
+        prvCheckTasksWaitingTermination();// 检查是否有任务已经删除自己，如果有，空闲任务负责释放被删除任务的TCB和堆栈。
 
         #if ( configUSE_PREEMPTION == 0 )
         {
@@ -3514,7 +3530,8 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
             taskYIELD();
         }
         #endif /* configUSE_PREEMPTION */
-
+        // configUSE_PREEMPTION用于配置启动抢占调度
+        // configIDLE_SHOULD_YIELD用于配置空闲时会主动让同优先级的就绪任务
         #if ( ( configUSE_PREEMPTION == 1 ) && ( configIDLE_SHOULD_YIELD == 1 ) )
         {
             /* When using preemption tasks of equal priority will be
@@ -3528,11 +3545,11 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
              * then a task other than the idle task is ready to execute. */
             if( listCURRENT_LIST_LENGTH( &( pxReadyTasksLists[ tskIDLE_PRIORITY ] ) ) > ( UBaseType_t ) 1 )
             {
-                taskYIELD();
+                taskYIELD();// 空闲任务发现有同优先级的任务就绪，主动请求任务切换
             }
             else
             {
-                mtCOVERAGE_TEST_MARKER();
+                mtCOVERAGE_TEST_MARKER();// 标记else分支覆盖测试，普通构建中为空 
             }
         }
         #endif /* ( ( configUSE_PREEMPTION == 1 ) && ( configIDLE_SHOULD_YIELD == 1 ) ) */
@@ -3741,11 +3758,11 @@ static void prvInitialiseTaskLists( void )
     pxOverflowDelayedTaskList = &xDelayedTaskList2;
 }
 /*-----------------------------------------------------------*/
-
+// 检查等待终止的任务
 static void prvCheckTasksWaitingTermination( void )
 {
     /** THIS FUNCTION IS CALLED FROM THE RTOS IDLE TASK **/
-
+// INCLUDE_vTaskDelete 宏定义为1时，表示启用了任务删除功能。此时，空闲任务会检查是否有任务已经删除自己，如果有，空闲任务负责释放被删除任务的TCB和堆栈。
     #if ( INCLUDE_vTaskDelete == 1 )
     {
         TCB_t * pxTCB;
@@ -3754,16 +3771,18 @@ static void prvCheckTasksWaitingTermination( void )
          * being called too often in the idle task. */
         while( uxDeletedTasksWaitingCleanUp > ( UBaseType_t ) 0U )
         {
-            taskENTER_CRITICAL();
+            taskENTER_CRITICAL();// 进入临界区
             {
+                // #define listGET_OWNER_OF_HEAD_ENTRY( pxList )            ( ( &( ( pxList )->xListEnd ) )->pxNext->pvOwner )
+                // 这里通过此得到待清理列表的第一个任务的tcb指针
                 pxTCB = listGET_OWNER_OF_HEAD_ENTRY( ( &xTasksWaitingTermination ) ); /*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */
-                ( void ) uxListRemove( &( pxTCB->xStateListItem ) );
-                --uxCurrentNumberOfTasks;
-                --uxDeletedTasksWaitingCleanUp;
+                ( void ) uxListRemove( &( pxTCB->xStateListItem ) );// 把该任务的节点从待清理列表中删除
+                --uxCurrentNumberOfTasks;// 现在的任务数减1
+                --uxDeletedTasksWaitingCleanUp;// 删除任务的等待清除减1
             }
-            taskEXIT_CRITICAL();
+            taskEXIT_CRITICAL();//退出临界区
 
-            prvDeleteTCB( pxTCB );
+            prvDeleteTCB( pxTCB );// 清理任务资源
         }
     }
     #endif /* INCLUDE_vTaskDelete */
@@ -4108,19 +4127,19 @@ static void prvResetNextTaskUnblockTime( void )
     {
         BaseType_t xReturn;
 
-        if( xSchedulerRunning == pdFALSE )
+        if( xSchedulerRunning == pdFALSE )// 调度器未运行
         {
-            xReturn = taskSCHEDULER_NOT_STARTED;
+            xReturn = taskSCHEDULER_NOT_STARTED;// 调度器未启动
         }
         else
         {
-            if( uxSchedulerSuspended == ( UBaseType_t ) 0U )
+            if( uxSchedulerSuspended == ( UBaseType_t ) 0U )// 调度器未挂起
             {
-                xReturn = taskSCHEDULER_RUNNING;
+                xReturn = taskSCHEDULER_RUNNING;// 调度器正在运行
             }
             else
             {
-                xReturn = taskSCHEDULER_SUSPENDED;
+                xReturn = taskSCHEDULER_SUSPENDED;// 调度器挂起
             }
         }
 

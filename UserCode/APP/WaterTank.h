@@ -14,7 +14,7 @@ typedef enum
     NULL_STATE = 0,
     TANK_EMPTY,     //已空，空端微动开关触发
     TANK_DRAINING,      //正在排水
-    TANK_MID,           //半满不空，且没有在进排水
+    TANK_MID,           //半满不空，且没有在进排水，一瓶子不满，半瓶子咣当
     TANK_FILLING,       //正在进水
     TANK_FULL,          //已满，满端微动开关触发
 }water_tank_state_t;

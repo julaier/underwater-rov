@@ -122,36 +122,43 @@ int main(void)
   MX_TIM5_Init();// 设置TIM5的时钟分频、计数模式、周期等参数，TIM5用于PWM输出，可以控制电机的速度和方向，三个电机分别使用TIM2的通道1、2、3输出PWM信号
   MX_ADC3_Init();// 设置ADC3的采样时间、分辨率、通道等参数，ADC3用于采集水箱液位传感器的模拟信号，并通过DMA传输到内存中
   MX_ADC2_Init();// 设置ADC2的采样时间、分辨率、通道等参数，ADC2用于采集水箱液位传感器的模拟信号，并通过DMA传输到内存中
-  MX_TIM1_Init();
-  MX_TIM3_Init();
-  MX_USART1_UART_Init();
-  MX_USART3_UART_Init();
-  MX_USART2_UART_Init();
-  MX_ADC1_Init();
-  MX_TIM8_Init();
-  MX_USART6_UART_Init();
-  MX_USART10_UART_Init();
+  MX_TIM1_Init();// 设置TIM1的时钟分频、计数模式、周期等参数，TIM1用于PWM输出，可以控制电机的速度和方向，三个电机分别使用TIM1的通道1、2、3输出PWM信号
+  MX_TIM8_Init();// 设置TIM8的时钟分频、计数模式、周期等参数，TIM8用于PWM输出，可以控制电机的速度和方向，三个电机分别使用TIM8的通道1、2、3输出PWM信号
+  MX_TIM3_Init();// 设置TIM3的时钟分频、计数模式、周期等参数，TIM3用于PWM输出，可以控制电机的速度和方向，三个电机分别使用TIM3的通道1、2、3输出PWM信号
+  MX_USART1_UART_Init();// 设置USART1的波特率、数据位、停止位、校验位等参数，
+  // 波特率为9600，数据位为8位，停止位为1位，无校验位，使用DMA接收数据，接收缓冲区为USART1_RX_BUF，大小为USART1_RX_BUF_SIZE
+  MX_USART3_UART_Init();// 设置USART3的波特率、数据位、停止位、校验位等参数，
+  // 波特率为115200，数据位为8位，停止位为1位，无校验位，使用DMA接收数据，接收缓冲区为USART3_RX_BUF，大小为USART3_RX_BUF_SIZE
+  MX_USART2_UART_Init();// 设置USART2的波特率、数据位、停止位、校验位等参数，
+  // 波特率为115200，数据位为8位，停止位为1位，无校验位，使用DMA接收数据，接收缓冲区为USART2
+  MX_ADC1_Init();// 设置ADC1的采样时间、分辨率、通道等参数，ADC1用于采集水箱液位传感器的模拟信号，并通过DMA传输到内存中
+  MX_TIM8_Init();// 设置TIM8的时钟分频、计数模式、周期等参数，TIM8用于PWM输出，可以控制电机的速度和方向，三个电机分别使用TIM8的通道1、2、3输出PWM信号
+  MX_USART6_UART_Init();// 设置USART6的波特率、数据位、停止位、校验位等参数，
+  // 波特率为9600，数据位为8位，停止位为1
+  MX_USART10_UART_Init();// 设置USART10的波特率、数据位、停止位、校验位等参数，
+  // 波特率为9600，数据位为8位，停止位为1
+
   /* USER CODE BEGIN 2 */
   Gamepad_Init(&gamepad_huart);  // 手柄初始化
   // OLED_Init();
   // MPU6050_Init();
-  BSP_JY901_Init();
+  BSP_JY901_Init();// 陀螺仪初始化
   Water_Tank_Init(); // 初始化排水，会卡死
-  WaterADC_Init();
-  APP_GPS_Init();
+  WaterADC_Init();// 水位传感器初始化
+  APP_GPS_Init();// GPS初始化
   APP_Thrusters_Init(); // 无刷电机初始化
   
   HAL_Delay(50);
 
-  HAL_GPIO_WritePin(USART10_485_GPIO_Port, USART10_485_Pin, GPIO_PIN_RESET); // 485接收使能
+  HAL_GPIO_WritePin(USART10_485_GPIO_Port, USART10_485_Pin, GPIO_PIN_RESET); // 485接收使能,pe4拉低，接收使能
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  MX_FREERTOS_Init();// freertos初始化，创建任务、队列、信号量等对象。
 
   /* Start scheduler */
-  osKernelStart();
+  osKernelStart();// 内核开启
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -289,7 +296,7 @@ void MPU_Config(void)
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);// MPU使能
 
 }
 

@@ -33,12 +33,12 @@ void Drone_Balance_Control(void)
 {
   if(Scheduler_Get_DroneBalanceControlFlag())
   {
-    if(jy901_data.roll > ELEVATION_ANGLE_THRESHOLD) //仰角过大
+    if(jy901_data.roll > ELEVATION_ANGLE_THRESHOLD) //仰角过大，10.0f
     {
       Water_Tank_Filling(&tank_front, 0.5f); //前水舱进水
       Water_Tank_Draining(&tank_rear, 0.5f); //后水舱排水
     }
-    if(jy901_data.roll < DEPRESSION_ANGLE_THRESHOLD) //俯角过大
+    if(jy901_data.roll < DEPRESSION_ANGLE_THRESHOLD) //俯角过大，DEPRESSION_ANGLE_THRESHOLD -10.0f
     {
       Water_Tank_Filling(&tank_rear, 0.5f); //后水舱进水
       Water_Tank_Draining(&tank_front, 0.5f); //前水舱排水

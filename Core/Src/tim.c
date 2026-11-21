@@ -48,10 +48,15 @@ void MX_TIM1_Init(void)
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;// 
   htim1.Init.Period = 5500-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 1;
+  htim1.Init.RepetitionCounter = 1;// 重复计数器，
+  //表示在计数器达到自动重装载值后，计数器会重新从0开始计数，
+  //并且重复计数器的值会减1，当重复计数器的值为0时，
+  //计数器才会真正地重新从0开始计数，这里设置为1，
+  //表示计数器在达到自动重装载值后，会重新从0开始计数，并且重复计数器的值会减1，
+  //当重复计数器的值为0时，计数器才会真正地重新从0开始计数
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {

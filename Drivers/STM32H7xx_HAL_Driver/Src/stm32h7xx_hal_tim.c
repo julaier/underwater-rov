@@ -1351,18 +1351,18 @@ HAL_StatusTypeDef HAL_TIM_PWM_Init(TIM_HandleTypeDef *htim)
     htim->PWM_MspInitCallback(htim);
 #else
     /* Init the low level hardware : GPIO, CLOCK, NVIC and DMA */
-    HAL_TIM_PWM_MspInit(htim);
+    HAL_TIM_PWM_MspInit(htim);// 没有用
 #endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
   }
 
   /* Set the TIM state */
-  htim->State = HAL_TIM_STATE_BUSY;
+  htim->State = HAL_TIM_STATE_BUSY;// 用于标记当前定时器状态为忙碌，防止其他操作干扰
 
   /* Init the base time for the PWM */
   TIM_Base_SetConfig(htim->Instance, &htim->Init);
 
   /* Initialize the DMA burst operation state */
-  htim->DMABurstState = HAL_DMA_BURST_STATE_READY;
+  htim->DMABurstState = HAL_DMA_BURST_STATE_READY;// DMA传输状态设置为准备好，表示可以进行DMA传输
 
   /* Initialize the TIM channels state */
   TIM_CHANNEL_STATE_SET_ALL(htim, HAL_TIM_CHANNEL_STATE_READY);

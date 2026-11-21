@@ -40,15 +40,19 @@ uint32_t motor_channel[MOTOR_COUNT + 1] = {
 uint16_t pulse_percircle = 3200;  //转一圈走的步数，产生的脉冲数
 
 MotorStruct Motor[10] = {0};
-
+// 
 void stepper_init(MotorStruct *motor, uint16_t v_start, uint16_t v_max, uint16_t acc, uint16_t steps)
 {
-    motor->velocity.v_start = v_start;
-    motor->velocity.v_max = v_max;
-    motor->velocity.acc = acc;
+    motor->velocity.v_start = v_start;// 记录规划的起步速度
+    motor->velocity.v_max = v_max;// 记录规划的最高速度
+    motor->velocity.acc = acc;// 记录规划的加速度
+    // 同一个 steps 存到两个地方。
+    // total_steps 供加减速规划使用，target_step 供中断判断何时停止。
     motor->velocity.total_steps = motor->target_step = steps;
+     // 算出加速、匀速、减速各要走多少步。
+    // 如果总步数太少，匀速段就是 0 步。
     motor->steps = calc_trapezoid_profile(motor->velocity);
-    motor->current_step = 0;
+    motor->current_step = 0;// 本次运动的已走步数从 0 开始
 }
 
 void Motor_Set(uint8_t num, uint8_t mode, GPIO_PinState dir, uint16_t pulse_num, uint16_t pulse_hz, uint16_t vstart, uint16_t vmax, uint16_t vacc) // 模式1定速 模式2定步 模式3停止

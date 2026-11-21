@@ -76,11 +76,12 @@
 #endif
 
 /* Limits */
-#define MAX_BITS_TASK_NOTIFY      31U
-#define MAX_BITS_EVENT_GROUPS     24U
+#define MAX_BITS_TASK_NOTIFY      31U// 任务通知的最大位数为31位，因为FreeRTOS使用一个32位的整数来表示任务通知的状态，
+//其中最高位（第32位）被保留用于内部使用，因此可用的任务通知位数为31位。
+#define MAX_BITS_EVENT_GROUPS     24U// 事件组的最大位数为24位，因为FreeRTOS使用一个32位的整数来表示事件组的状态，其中最高8位（第25到32位）被保留用于内部使用，因此可用的事件组位数为24位。
 
-#define THREAD_FLAGS_INVALID_BITS (~((1UL << MAX_BITS_TASK_NOTIFY)  - 1U))
-#define EVENT_FLAGS_INVALID_BITS  (~((1UL << MAX_BITS_EVENT_GROUPS) - 1U))
+#define THREAD_FLAGS_INVALID_BITS (~((1UL << MAX_BITS_TASK_NOTIFY)  - 1U))// 任务标志无效位掩码，表示任务通知的无效位。它通过将1左移MAX_BITS_TASK_NOTIFY位，然后减去1，得到一个二进制数，其中前MAX_BITS_TASK_NOTIFY位为0，其余位为1。最后对该值取反，得到任务标志无效位掩码。
+#define EVENT_FLAGS_INVALID_BITS  (~((1UL << MAX_BITS_EVENT_GROUPS) - 1U))// 任务标志无效位掩码，表示事件组的无效位。它通过将1左移MAX_BITS_EVENT_GROUPS位，然后减去1，得到一个二进制数，其中前MAX_BITS_EVENT_GROUPS位为0，其余位为1。最后对该值取反，得到事件标志无效位掩码。
 
 /* Kernel version and identification string definition (major.minor.rev: mmnnnrrrr dec) */
 #define KERNEL_VERSION            (((uint32_t)tskKERNEL_VERSION_MAJOR * 10000000UL) | \
@@ -91,21 +92,21 @@
 
 /* Timer callback information structure definition */
 typedef struct {
-  osTimerFunc_t func;
-  void         *arg;
-} TimerCallback_t;
+  osTimerFunc_t func;// 定时器回调函数指针，指向在定时器到期时要执行的函数。
+  void         *arg;// 参数，传递给定时器回调函数的参数，可以是任意类型的指针。
+} TimerCallback_t;// 回调函数
 
 /* Kernel initialization state */
-static osKernelState_t KernelState = osKernelInactive;
+static osKernelState_t KernelState = osKernelInactive;// 内核未激活
 
 /* Get OS Tick count value */
-static uint32_t OS_Tick_GetCount (void);
-#if (configUSE_TICKLESS_IDLE == 0)
+static uint32_t OS_Tick_GetCount (void);// 得到滴答定时的个数
+#if (configUSE_TICKLESS_IDLE == 0)// 空闲模式不使用滴答定时器
 /* Get OS Tick overflow status */
-static uint32_t OS_Tick_GetOverflow (void);
+static uint32_t OS_Tick_GetOverflow (void);// 获取滴答定时器溢出状态
 #endif
 /* Get OS Tick interval */
-static uint32_t OS_Tick_GetInterval (void);
+static uint32_t OS_Tick_GetInterval (void);// 获取滴答定时器的间隔
 
 /*
   Heap region definition used by heap_5 variant
@@ -178,6 +179,7 @@ void SysTick_Handler (void) {
 /*
   Setup SVC to reset value.
 */
+// 设置SVC中断的优先级为0，确保SVC中断的优先级最高，以便在需要时能够及时响应。
 __STATIC_INLINE void SVC_Setup (void) {
 #if (__ARM_ARCH_7A__ == 0U)
   /* Service Call interrupt might be configured before kernel start      */
@@ -269,7 +271,7 @@ osStatus_t osKernelInitialize (void) {
     stat = osErrorISR;
   }
   else {
-    state = xTaskGetSchedulerState();
+    state = xTaskGetSchedulerState();// 调度器的状态
 
     /* Initialize if scheduler not started and not initialized before */
     if ((state == taskSCHEDULER_NOT_STARTED) && (KernelState == osKernelInactive)) {
@@ -277,12 +279,12 @@ osStatus_t osKernelInitialize (void) {
         /* Initialize the trace macro debugging output channel */
         EvrFreeRTOSSetup(0U);
       #endif
-      #if defined(USE_FreeRTOS_HEAP_5) && (HEAP_5_REGION_SETUP == 1)
+      #if defined(USE_FreeRTOS_HEAP_5) && (HEAP_5_REGION_SETUP == 1)// 在这里用的是heap_4的内存管理
         /* Initialize the memory regions when using heap_5 variant */
         vPortDefineHeapRegions (configHEAP_5_REGIONS);
       #endif
-      KernelState = osKernelReady;
-      stat = osOK;
+      KernelState = osKernelReady;// 内核已经准备好
+      stat = osOK;// 内核初始化成功
     } else {
       stat = osError;
     }
@@ -348,7 +350,10 @@ osKernelState_t osKernelGetState (void) {
 }
 
 /*
-  Start the RTOS Kernel scheduler.
+* Start the RTOS Kernel scheduler.
+*/
+/*
+*开启RTOS内核调度器
 */
 osStatus_t osKernelStart (void) {
   osStatus_t stat;
@@ -363,11 +368,11 @@ osStatus_t osKernelStart (void) {
     /* Start scheduler if initialized and not started before */
     if ((state == taskSCHEDULER_NOT_STARTED) && (KernelState == osKernelReady)) {
       /* Ensure SVC priority is at the reset value */
-      SVC_Setup();
+      SVC_Setup();// 设置SVC中断的优先级为0，确保SVC中断的优先级最高，以便在需要时能够及时响应。
       /* Change state to ensure correct API flow */
-      KernelState = osKernelRunning;
+      KernelState = osKernelRunning;// 内核状态设置为正在运行，防止再次调用osKernelStart()函数
       /* Start the kernel scheduler */
-      vTaskStartScheduler();
+      vTaskStartScheduler();// 开启任务调度器
       stat = osOK;
     } else {
       stat = osError;
@@ -574,6 +579,13 @@ uint32_t osKernelGetSysTimerFreq (void) {
     structure in order to allocate object statically.
   - Attribute osThreadJoinable is not supported, NULL is returned if used.
 */
+/*
+*func: 线程函数指针，指向线程的入口函数
+*argument: 传递给线程函数的参数，可以是任意类型的指针
+*attr: 线程的属性，包括名称、优先级、堆栈大小
+*此函数用于创建一个新的线程，并将其添加到活动线程列表中。它会根据传入的属性参数来设置线程的名称、优先级
+*和堆栈大小。如果属性参数为NULL，则使用默认值。函数会根据属性参数的设置
+*/
 osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAttr_t *attr) {
   const char *name;
   uint32_t stack;
@@ -592,17 +604,17 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
 
     if (attr != NULL) {
       if (attr->name != NULL) {
-        name = attr->name;
+        name = attr->name;// 设置线程的名称
       }
       if (attr->priority != osPriorityNone) {
-        prio = (UBaseType_t)attr->priority;
+        prio = (UBaseType_t)attr->priority;// 设置线程的优先级
       }
-
+      // 如果线程的优先级小于空闲优先级或大于中断服务程序优先级，或者使用了不支持的osThreadJoinable属性，则返回NULL，也就是不创建线程
       if ((prio < osPriorityIdle) || (prio > osPriorityISR) || ((attr->attr_bits & osThreadJoinable) == osThreadJoinable)) {
         /* Invalid priority or unsupported osThreadJoinable attribute used */
         return (NULL);
       }
-
+// 设置线程的堆栈大小，如果attr->stack_size大于0，则将其除以sizeof(StackType_t)得到堆栈大小的单位为StackType_t的数量
       if (attr->stack_size > 0U) {
         /* In FreeRTOS stack is not in bytes, but in sizeof(StackType_t) which is 4 on ARM ports.       */
         /* Stack size should be therefore 4 byte aligned in order to avoid division caused side effects */
@@ -624,7 +636,7 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
     else {
       mem = 0;
     }
-
+// 根据mem的值来决定是使用静态分配还是动态分配来创建线程
     if (mem == 1) {
       #if (configSUPPORT_STATIC_ALLOCATION == 1)
         hTask = xTaskCreateStatic ((TaskFunction_t)func, name, stack, argument, prio, (StackType_t  *)attr->stack_mem,
@@ -1660,27 +1672,28 @@ osStatus_t osEventFlagsDelete (osEventFlagsId_t ef_id) {
   - Priority inherit protocol is used by default, osMutexPrioInherit attribute is ignored.
   - Robust mutex is not supported, NULL is returned if used.
 */
+// 判断是否是中断触发，如果是中断触发就返回NULL，互斥锁只能在任务中创建，不能在中断中创建
 osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
-  SemaphoreHandle_t hMutex;
+  SemaphoreHandle_t hMutex;// 互斥锁
   uint32_t type;
   uint32_t rmtx;
   int32_t  mem;
 
   hMutex = NULL;
-
+// 先判断有没有中断触发
   if (IRQ_Context() == 0U) {
     if (attr != NULL) {
       type = attr->attr_bits;
     } else {
       type = 0U;
     }
-
-    if ((type & osMutexRecursive) == osMutexRecursive) {
+// 判断是否是递归互斥锁
+    if ((type & osMutexRecursive) == osMutexRecursive// 如果是递归互斥锁就置1) {
       rmtx = 1U;
     } else {
       rmtx = 0U;
     }
-
+// 判断是否是健壮互斥锁
     if ((type & osMutexRobust) != osMutexRobust) {
       mem = -1;
 
@@ -2096,6 +2109,15 @@ osStatus_t osSemaphoreDelete (osSemaphoreId_t semaphore_id) {
   Limitations:
   - The memory for control block and and message data must be provided in the
     osThreadAttr_t structure in order to allocate object statically.
+*/
+/*
+*msg_count: 消息队列中消息的最大数量
+*msg_size: 消息队列中每条消息的大小
+*attr: 消息队列的属性，包括控制块和消息数据的内存 
+*此函数用于创建和初始化一个消息队列对象。它首先检查是否在中断上下文中调用，如果是，则返回NULL。
+*然后根据传入的属性参数，判断是否提供了控制块和消息数据的内存。如果提供了内存，则使用静态分配创建消息队列；
+*如果没有提供内存，则使用动态分配创建消息队列。最后，如果创建成功且提供了名称属性，则将消息队列添加到队列注册表中。
+*函数返回消息队列的ID。
 */
 osMessageQueueId_t osMessageQueueNew (uint32_t msg_count, uint32_t msg_size, const osMessageQueueAttr_t *attr) {
   QueueHandle_t hQueue;

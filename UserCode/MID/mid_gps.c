@@ -182,9 +182,10 @@ void MID_GPS_ParseRmc(nmea_msg *gpsx,uint8_t *buf)
 	uint32_t temp;
 	int itemp;
 	if ((gpsx == NULL) || (buf == NULL)) return;
-	p1=(uint8_t*)strstr((const char *)buf,"RMC");//"$GPRMC",经常有&和GPRMC分开的情况,故只判断GPRMC.
-	if (p1 == NULL) return;
-	posx=MID_GPS_CommaPos(p1,1);								//得到UTC时间
+	p1=(uint8_t*)strstr((const char *)buf,"RMC");//"$GPRMC",经常有&和GPRMC分开的情况,故只判断GPRMC.就是看找到找不到RMC，找到返回R的索引
+	if (p1 == NULL) return;// 没找到就go away
+	posx=MID_GPS_CommaPos(p1,1);	// 找到逗号的偏移量							//得到UTC时间
+	// $GNRMC,081530.00,A,2230.0000,N,11403.0000,E,0.5,90.0,...
 	if(posx!=0XFF)
 	{
 		temp=MID_GPS_StrToNum(p1+posx,&dx)/MID_GPS_Pow10(10,dx);	 	//得到UTC时间,去掉ms
@@ -193,7 +194,7 @@ void MID_GPS_ParseRmc(nmea_msg *gpsx,uint8_t *buf)
 		gpsx->utc.min=(temp/100)%100;
 		gpsx->utc.sec=temp%100;	
 	}
-	posx=MID_GPS_CommaPos(p1,3);								//得到纬度
+	posx=MID_GPS_CommaPos(p1,3);// 找到第三个逗数								//得到纬度
 	if(posx!=0XFF)
 	{	
 		temp=MID_GPS_StrToNum(p1+posx,&dx);		 	 

@@ -93,7 +93,7 @@ void Gamepad_RxCallback(uint8_t data)
                 rxIndex = 2;
                 rxState = STATE_RECV_DATA;
             } else {
-                rxState = STATE_WAIT_HEAD1;  // 重新等待
+                rxState = STATE_WAIT_HEAD1;  // 如果数据不对，重新等待
             }
             break;
         case STATE_RECV_DATA:
@@ -101,7 +101,7 @@ void Gamepad_RxCallback(uint8_t data)
             if (rxIndex >= FRAME_LENGTH) {
                 // 检查帧尾
                 if (rxBuffer[FRAME_LENGTH - 1] == FRAME_TAIL) {
-                    Gamepad_ParseFrame(rxBuffer);
+                    Gamepad_ParseFrame(rxBuffer);//解析手柄完整的数据
                 }
                 rxState = STATE_WAIT_HEAD1;  // 重置状态机
                 rxIndex = 0;
@@ -116,6 +116,21 @@ void Gamepad_RxCallback(uint8_t data)
 /**
  * @brief 获取手柄数据指针
  */
+/*
+typedef struct {
+    uint8_t  leftX;         // 左摇杆X  (0~255, 128居中)
+    uint8_t  leftY;         // 左摇杆Y  (0~255, 128居中)
+    uint8_t  rightX;        // 右摇杆X  (0~255, 128居中)
+    uint8_t  rightY;        // 右摇杆Y  (0~255, 128居中)
+    uint16_t buttons;       // 按键 (1=A, 2=B, 4=X, 8=Y, 16=开关左边按键, 64=开关右边按键, 128=左摇杆按下, 256=右摇杆按下, 512=LB(按键有点问题), 1024=RB)
+    uint8_t  hatX;          // 十字键X  (0=左, 1=中, 2=右)
+    uint8_t  lt;            // 左扳机
+    uint8_t  hatY;          // 十字键Y  (0=上, 1=中, 2=下)
+    uint8_t  rt;            // 右扳机
+    uint8_t  isUpdated;     // 数据更新标志
+}  GamepadData_t;
+  gamepadData = {128, 128, 128, 128, 0, 1, 1, 0};
+*/
 GamepadData_t* Gamepad_GetData(void)
 {
     return &gamepadData;

@@ -52,9 +52,9 @@
 /* Definitions for SystemTask */
 osThreadId_t SystemTaskHandle;
 const osThreadAttr_t SystemTask_attributes = {
-  .name = "SystemTask",
-  .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .name = "SystemTask",// 任务名称
+  .stack_size = 512 * 4,// 512 * 4 = 2048 字节
+  .priority = (osPriority_t) osPriorityLow,// 优先级为-2
 };
 /* Definitions for FocTask */
 osThreadId_t FocTaskHandle;
@@ -124,8 +124,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
   /* Create the mutex(es) */
   /* creation of DebugUsartMutex */
-  DebugUsartMutexHandle = osMutexNew(&DebugUsartMutex_attributes);
-
+  DebugUsartMutexHandle = osMutexNew(&DebugUsartMutex_attributes);//创建一把供调试串口使用的锁，把这把锁的“标识”保存到 DebugUsartMutexHandle
+  // 也就是每个任务打印调试信息前都要先获取这把锁，打印完后再释放这把锁，这样就不会出现多个任务同时打印调试信息导致的串口输出混乱的问题
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -140,30 +140,41 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of GamepadQueue */
-  GamepadQueueHandle = osMessageQueueNew (1, sizeof(uint8_t), &GamepadQueue_attributes);
+  GamepadQueueHandle = osMessageQueueNew (1, sizeof(uint8_t), &GamepadQueue_attributes);// 创建消息队列，返回消息队列句柄
 
   /* creation of WaterTankQueue */
-  WaterTankQueueHandle = osMessageQueueNew (10, sizeof(uint16_t), &WaterTankQueue_attributes);
+  /* 最多存放 10 条消息
+  * 每条消息占 2 字节
+  * 队列属性
+  */
+  WaterTankQueueHandle = osMessageQueueNew (10, sizeof(uint16_t), &WaterTankQueue_attributes);// 创建消息队列，返回消息队列句柄
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
-
+ // 优先级：SystemTask < CommTask < NavigationTask < BuoyancyTask < FocTask
+ // 任务调度：FocTask（10ms周期）> BuoyancyTask（50ms周期）
+ // > NavigationTask（100ms周期）> CommTask（500ms周期）> SystemTask（20周期）
   /* Create the thread(s) */
   /* creation of SystemTask */
-  SystemTaskHandle = osThreadNew(vSystemTask, NULL, &SystemTask_attributes);
+  // 创建system任务线程，用于系统管理，优先级最低，周期20ms
+  SystemTaskHandle = osThreadNew(vSystemTask, NULL, &SystemTask_attributes);// 创建线程，返回线程句柄
 
   /* creation of FocTask */
-  FocTaskHandle = osThreadNew(vFocTask, NULL, &FocTask_attributes);
+  // 创建foc任务线程，用于电机控制，优先级最高，周期10ms
+  FocTaskHandle = osThreadNew(vFocTask, NULL, &FocTask_attributes);// 创建线程，返回线程句柄
 
   /* creation of NavigationTask */
-  NavigationTaskHandle = osThreadNew(vNavigationTask, NULL, &NavigationTask_attributes);
+  // 导航任务线程，用于导航控制，，周期100ms，优先级第3
+  NavigationTaskHandle = osThreadNew(vNavigationTask, NULL, &NavigationTask_attributes);// 创建线程，返回线程句柄
 
   /* creation of BuoyancyTask */
-  BuoyancyTaskHandle = osThreadNew(vBuoyancyTask, NULL, &BuoyancyTask_attributes);
+  // 水舱任务线程，用于水舱控制，周期50ms，优先级仅次于foc
+  BuoyancyTaskHandle = osThreadNew(vBuoyancyTask, NULL, &BuoyancyTask_attributes);// 创建线程，返回线程句柄
 
   /* creation of CommTask */
-  CommTaskHandle = osThreadNew(vCommTask, NULL, &CommTask_attributes);
+  // 通信任务线程，用于通信控制，周期500ms，优先级仅高于system
+  CommTaskHandle = osThreadNew(vCommTask, NULL, &CommTask_attributes);// 创建线程，返回线程句柄
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -188,7 +199,7 @@ void vSystemTask(void *argument)
   /* Infinite loop */
   // 优先级：SystemTask < CommTask < NavigationTask < BuoyancyTask < FocTask
   // 任务调度：FocTask（10ms周期）> BuoyancyTask（50ms周期）> NavigationTask（100ms周期）> CommTask（500ms周期）> SystemTask（20周期）
-  TickType_t xLastWakeTime = xTaskGetTickCount();
+  TickType_t xLastWakeTime = xTaskGetTickCount();// 得到滴答数
   for(;;)
   {
     // 任务运行

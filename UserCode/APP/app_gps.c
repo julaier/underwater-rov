@@ -34,7 +34,7 @@ void APP_GPS_GetData(void)
 		return;
 	}
 
-	MID_GPS_ParseRmc(&nmea, rmc_sentence);
+	MID_GPS_ParseRmc(&nmea, rmc_sentence);// 解析RMC语句中的时间、经纬度和速度。
 
 	gps_data.latitude = (float)nmea.latitude / 100000.0f;
 	gps_data.longitude = (float)nmea.longitude / 100000.0f;

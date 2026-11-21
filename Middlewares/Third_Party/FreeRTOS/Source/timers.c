@@ -238,7 +238,7 @@
          * configUSE_TIMERS is set to 1.  Check that the infrastructure used by the
          * timer service task has been created/initialised.  If timers have already
          * been created then the initialisation will already have been performed. */
-        prvCheckForValidListAndQueue();
+        prvCheckForValidListAndQueue();// 检查是否已经配置了定时器，如果没有初始化，定时器列表
 
         if( xTimerQueue != NULL )
         {
@@ -247,8 +247,9 @@
                 StaticTask_t * pxTimerTaskTCBBuffer = NULL;
                 StackType_t * pxTimerTaskStackBuffer = NULL;
                 uint32_t ulTimerTaskStackSize;
-
+                // 得到定时器列表的内存，使用静态内存
                 vApplicationGetTimerTaskMemory( &pxTimerTaskTCBBuffer, &pxTimerTaskStackBuffer, &ulTimerTaskStackSize );
+               // 创建任务
                 xTimerTaskHandle = xTaskCreateStatic( prvTimerTask,
                                                       configTIMER_SERVICE_TASK_NAME,
                                                       ulTimerTaskStackSize,
@@ -268,16 +269,17 @@
                                        configTIMER_SERVICE_TASK_NAME,
                                        configTIMER_TASK_STACK_DEPTH,
                                        NULL,
-                                       ( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
+                                       ( ( UBaseType_t )     configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
                                        &xTimerTaskHandle );
             }
             #endif /* configSUPPORT_STATIC_ALLOCATION */
         }
         else
         {
-            mtCOVERAGE_TEST_MARKER();
+            mtCOVERAGE_TEST_MARKER();// 标记else分支供覆盖率测试，普通构建中为空
         }
-
+// #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+//   如果失败，关闭中断，进入死循环
         configASSERT( xReturn );
         return xReturn;
     }

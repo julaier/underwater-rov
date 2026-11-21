@@ -85,9 +85,9 @@ void BSP_GPS_WriteFifo(uint8_t byte)
  */
 void BSP_GPS_Task(void)
 {
-    while (bsp_gps_fifo_read != bsp_gps_fifo_write)
+    while (bsp_gps_fifo_read != bsp_gps_fifo_write)// 当当前读的不等于传入的时候接收
     {
-        BSP_GPS_ProcessSentenceByte(bsp_gps_rx_fifo[bsp_gps_fifo_read]);
+        BSP_GPS_ProcessSentenceByte(bsp_gps_rx_fifo[bsp_gps_fifo_read]);// 拼接数据
         bsp_gps_fifo_read = (uint16_t)((bsp_gps_fifo_read + 1U) % BSP_GPS_RX_FIFO_SIZE); //读指针后移
     }
 }
@@ -101,12 +101,12 @@ static void BSP_GPS_ProcessSentenceByte(uint8_t byte)
 {
     uint16_t copy_len;
 
-    if (byte == '$')
+    if (byte == '$')// 起始
     {
         bsp_gps_sentence_length = 0;
     }
 
-    if (bsp_gps_sentence_length >= (BSP_GPS_NMEA_SENTENCE_SIZE - 1U))
+    if (bsp_gps_sentence_length >= (BSP_GPS_NMEA_SENTENCE_SIZE - 1U))   //如果一句的长度大于最大，返回
     {
         bsp_gps_sentence_length = 0;
         return;
@@ -114,15 +114,15 @@ static void BSP_GPS_ProcessSentenceByte(uint8_t byte)
 
     bsp_gps_sentence_buffer[bsp_gps_sentence_length++] = byte;
 
-    if (byte == '\n')
+    if (byte == '\n')// 结束
     {
         bsp_gps_sentence_buffer[bsp_gps_sentence_length] = '\0';
 
         if (strstr((const char *)bsp_gps_sentence_buffer, "RMC") != NULL)
         {
             copy_len = bsp_gps_sentence_length + 1U; //下标从0开始，长度 = 下标 + 1
-            memcpy(bsp_gps_latest_rmc, bsp_gps_sentence_buffer, copy_len);
-            bsp_gps_latest_rmc_ready = 1U;
+            memcpy(bsp_gps_latest_rmc, bsp_gps_sentence_buffer, copy_len);// 如果句子带rmc就把它拷贝入最后一个rmc中
+            bsp_gps_latest_rmc_ready = 1U;// 最近rmc缓存有效
         }
 
         bsp_gps_sentence_length = 0;
@@ -170,6 +170,6 @@ uint8_t BSP_GPS_GetLatestRmcSentence(uint8_t *buf, uint16_t buf_size)
 void BSP_GPS_UART_RxCallback(void)
 {
     __HAL_UART_CLEAR_FLAG(bsp_gps_state.huart, UART_FLAG_ORE | UART_FLAG_NE | UART_FLAG_FE | UART_FLAG_PE);
-    HAL_UART_AbortReceive(bsp_gps_state.huart);
-    HAL_UART_Receive_IT(bsp_gps_state.huart, &bsp_gps_rx_byte, 1U);
+    HAL_UART_AbortReceive(bsp_gps_state.huart);//  结束旧的接收，恢复就绪
+    HAL_UART_Receive_IT(bsp_gps_state.huart, &bsp_gps_rx_byte, 1U);// 准备新的接收
 }

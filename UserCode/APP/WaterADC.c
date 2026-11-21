@@ -39,8 +39,8 @@ uint8_t Water_Check(void)
     static float last_voltage0 = 0.0f;
     static float last_voltage1 = 0.0f;
 
-    voltage_value[0] = lowpass_filter(voltage_value[0], &last_voltage0, lowpass_alpha);
-    voltage_value[1] = lowpass_filter(voltage_value[1], &last_voltage1, lowpass_alpha);
+    voltage_value[0] = lowpass_filter(voltage_value[0], &last_voltage0, lowpass_alpha);//一阶低通滤波使变化更平滑
+    voltage_value[1] = lowpass_filter(voltage_value[1], &last_voltage1, lowpass_alpha);//一阶低通滤波使变化更平滑
 
     last_voltage0 = voltage_value[0];
     last_voltage1 = voltage_value[1];

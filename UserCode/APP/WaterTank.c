@@ -89,17 +89,17 @@ void Water_Tank_Draining_To_Empty(water_tank_t *tank)
     {
         if(tank->event_empty)
         {
-            tank->event_empty = 0;
+            tank->event_empty = 0;// 不太懂
             tank->state = TANK_EMPTY;
             tank->now_water_volume = 0;
-            Motor_Stop(tank->connect_motor_num);
+            Motor_Stop(tank->connect_motor_num);// 停止步进电机
             tank->last_finished_steps = 0;
             Motor[tank->connect_motor_num].current_step = 0;
             break;
         }
         tank->target_water_volume = tank->now_water_volume - 0.1f; //每次排0.1ml水
         tank->state = TANK_DRAINING;
-        Load_Water_Volume(tank);
+        Load_Water_Volume(tank);// 将目标水量实现
         uint16_t delay_time_ms = 0.1f / tank->water_velocity * 1000.0f; //根据水速计算每0.1ml水的排空时间
         delay_ms(delay_time_ms);
         

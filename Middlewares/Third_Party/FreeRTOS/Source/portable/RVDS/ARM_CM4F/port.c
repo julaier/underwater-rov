@@ -429,7 +429,7 @@ BaseType_t xPortStartScheduler( void )
     *( portFPCCR ) |= portASPEN_AND_LSPEN_BITS;
 
     /* Start the first task. */
-    prvStartFirstTask();
+    prvStartFirstTask();// 开始第一个任务
 
     /* Should not get here! */
     return 0;
@@ -443,24 +443,32 @@ void vPortEndScheduler( void )
     configASSERT( uxCriticalNesting == 1000UL );
 }
 /*-----------------------------------------------------------*/
-
+// 此函数用于进入临界区，禁止中断，增加临界区嵌套计数。
 void vPortEnterCritical( void )
 {
-    portDISABLE_INTERRUPTS();
-    uxCriticalNesting++;
+    portDISABLE_INTERRUPTS();// 禁止中断
+    uxCriticalNesting++;// 嵌套数加1
 
     /* This is not the interrupt safe version of the enter critical function so
      * assert() if it is being called from an interrupt context.  Only API
      * functions that end in "FromISR" can be used in an interrupt.  Only assert if
      * the critical nesting count is 1 to protect against recursive calls if the
      * assert function also uses a critical section. */
+    // 如果当前处于中断上下文中，并且临界区嵌套计数为1，则触发断言
     if( uxCriticalNesting == 1 )
     {
+        // #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+        /*
+        *if (( portNVIC_INT_CTRL_REG & portVECTACTIVE_MASK ) == 0 )
+        *{taskDISABLE_INTERRUPTS(); for( ;; );}
+        *taskDISABLE_INTERRUPTS()推迟切换
+        *就是第一次进入临界区时，检查当前是否处于中断上下文中，如果是，则触发断言。就直接死循环
+        */
         configASSERT( ( portNVIC_INT_CTRL_REG & portVECTACTIVE_MASK ) == 0 );
     }
 }
 /*-----------------------------------------------------------*/
-
+// 此函数用于退出临界区，减少临界区嵌套计数，如果嵌套计数为0，则允许中断。
 void vPortExitCritical( void )
 {
     configASSERT( uxCriticalNesting );
