@@ -54,7 +54,7 @@ void System_Task(void)
     APP_GPS_Task();
 
     //水舱状态机更新
-    Water_Tank_Update_Handler(&tank_front); 
+    Water_Tank_Update_Handler(&tank_front); // 处理水舱事件并更新当前状态。更新估算水量
     Water_Tank_Update_Handler(&tank_rear);
 }
 
